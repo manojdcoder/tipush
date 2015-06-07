@@ -1,4 +1,4 @@
 tmp
 bin
-build
+build/
 .apt_generated
