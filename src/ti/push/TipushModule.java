@@ -8,21 +8,41 @@
  */
 package ti.push;
 
+import java.io.IOException;
+import java.util.HashMap;
+
+import org.appcelerator.kroll.KrollDict;
+import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
-
 import org.appcelerator.titanium.TiApplication;
+import org.appcelerator.titanium.TiC;
+import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.kroll.common.Log;
-import org.appcelerator.kroll.common.TiConfig;
 
+import android.os.AsyncTask;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.iid.InstanceID;
 
 @Kroll.module(name="Tipush", id="ti.push")
 public class TipushModule extends KrollModule
 {
 
 	private static final String TAG = "TipushModule";
+	
+	//Properties
+	public static final String PROPERTY_SENDER_ID = "senderId";
+	public static final String PROPERTY_DEVICE_TOKEN = "deviceToken";
 
-	@Kroll.constant public static final String EXTERNAL_NAME = "";
+	//Module constants
+	@Kroll.constant public static final int SERVICE_DISABLED = ConnectionResult.SERVICE_DISABLED;
+	@Kroll.constant public static final int SERVICE_INVALID = ConnectionResult.SERVICE_INVALID;
+	@Kroll.constant public static final int SERVICE_MISSING = ConnectionResult.SERVICE_MISSING;
+	@Kroll.constant public static final int SERVICE_UPDATING = ConnectionResult.SERVICE_UPDATING;
+	@Kroll.constant public static final int SERVICE_VERSION_UPDATE_REQUIRED = ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED;
 
 	public TipushModule()
 	{
@@ -34,5 +54,64 @@ public class TipushModule extends KrollModule
 	{
 		Log.d(TAG, "inside onAppCreate");
 	}
+	
+	@Kroll.method
+	public int isGooglePlayServicesAvailable()
+	{
+		return GooglePlayServicesUtil.isGooglePlayServicesAvailable(TiApplication.getInstance());
+	}
+	
+	@Kroll.method
+	public void retrieveDeviceToken(KrollDict d)
+	{
+		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
+		final KrollFunction successCallback = (KrollFunction) d.get(TiC.PROPERTY_SUCCESS);
+		final KrollFunction errorCallback = (KrollFunction) d.get(TiC.EVENT_ERROR);
+		new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    String token = InstanceID.getInstance(TiApplication.getInstance()).getToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+                    if(successCallback != null){
+                	    HashMap<String, Object> dict = new HashMap<String, Object>();
+                	    dict.put(PROPERTY_DEVICE_TOKEN, token);
+                	    successCallback.call(getKrollObject(), dict);
+                    }
+                } catch (final IOException e) {
+                   if(errorCallback != null){
+                	    HashMap<String, Object> dict = new HashMap<String, Object>();
+                	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
+					    errorCallback.call(getKrollObject(), dict);
+                   }
+                }
+                return null;
+            }
+        }.execute();
+	}
+
+    public void destroyDeviceToken(KrollDict d)
+    {
+    	final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
+		final KrollFunction successCallback = (KrollFunction) d.get(TiC.PROPERTY_SUCCESS);
+		final KrollFunction errorCallback = (KrollFunction) d.get(TiC.EVENT_ERROR);
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    InstanceID.getInstance(TiApplication.getInstance()).deleteToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE);
+                    if(successCallback != null){
+                	    successCallback.call(getKrollObject(), new HashMap<String, Object>());
+                    }
+                } catch (final IOException e) {
+                	if(errorCallback != null){
+                 	    HashMap<String, Object> dict = new HashMap<String, Object>();
+                 	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
+ 					    errorCallback.call(getKrollObject(), dict);
+                    }
+                }
+                return null;
+            }
+        }.execute();
+    }
 }
 

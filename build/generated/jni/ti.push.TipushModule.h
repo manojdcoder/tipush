@@ -29,6 +29,8 @@ public:
 
 private:
 	// Methods -----------------------------------------------------------
+	static v8::Handle<v8::Value> isGooglePlayServicesAvailable(const v8::Arguments&);
+	static v8::Handle<v8::Value> retrieveDeviceToken(const v8::Arguments&);
 	static v8::Handle<v8::Value> example(const v8::Arguments&);
 
 	// Dynamic property accessors ----------------------------------------

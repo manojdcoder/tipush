@@ -89,6 +89,8 @@ Handle<FunctionTemplate> TipushModule::getProxyTemplate()
 	titanium::ProxyFactory::registerProxyPair(javaClass, *proxyTemplate);
 
 	// Method bindings --------------------------------------------------------
+	DEFINE_PROTOTYPE_METHOD(proxyTemplate, "isGooglePlayServicesAvailable", TipushModule::isGooglePlayServicesAvailable);
+	DEFINE_PROTOTYPE_METHOD(proxyTemplate, "retrieveDeviceToken", TipushModule::retrieveDeviceToken);
 	DEFINE_PROTOTYPE_METHOD(proxyTemplate, "example", TipushModule::example);
 
 	Local<ObjectTemplate> prototypeTemplate = proxyTemplate->PrototypeTemplate();
@@ -99,6 +101,23 @@ Handle<FunctionTemplate> TipushModule::getProxyTemplate()
 		titanium::Proxy::setIndexedProperty);
 
 	// Constants --------------------------------------------------------------
+	JNIEnv *env = titanium::JNIScope::getEnv();
+	if (!env) {
+		LOGE(TAG, "Failed to get environment in TipushModule");
+		//return;
+	}
+
+
+		DEFINE_INT_CONSTANT(prototypeTemplate, "SERVICE_INVALID", 9);
+
+		DEFINE_INT_CONSTANT(prototypeTemplate, "SERVICE_UPDATING", 18);
+
+		DEFINE_INT_CONSTANT(prototypeTemplate, "SERVICE_MISSING", 1);
+
+		DEFINE_INT_CONSTANT(prototypeTemplate, "SERVICE_DISABLED", 3);
+
+		DEFINE_INT_CONSTANT(prototypeTemplate, "SERVICE_VERSION_UPDATE_REQUIRED", 2);
+
 
 	// Dynamic properties -----------------------------------------------------
 	instanceTemplate->SetAccessor(String::NewSymbol("exampleProp"),
@@ -112,6 +131,121 @@ Handle<FunctionTemplate> TipushModule::getProxyTemplate()
 }
 
 // Methods --------------------------------------------------------------------
+Handle<Value> TipushModule::isGooglePlayServicesAvailable(const Arguments& args)
+{
+	LOGD(TAG, "isGooglePlayServicesAvailable()");
+	HandleScope scope;
+
+	JNIEnv *env = titanium::JNIScope::getEnv();
+	if (!env) {
+		return titanium::JSException::GetJNIEnvironmentError();
+	}
+	static jmethodID methodID = NULL;
+	if (!methodID) {
+		methodID = env->GetMethodID(TipushModule::javaClass, "isGooglePlayServicesAvailable", "()I");
+		if (!methodID) {
+			const char *error = "Couldn't find proxy method 'isGooglePlayServicesAvailable' with signature '()I'";
+			LOGE(TAG, error);
+				return titanium::JSException::Error(error);
+		}
+	}
+
+	titanium::Proxy* proxy = titanium::Proxy::unwrap(args.Holder());
+
+	jvalue* jArguments = 0;
+
+	jobject javaProxy = proxy->getJavaObject();
+	jint jResult = (jint)env->CallIntMethodA(javaProxy, methodID, jArguments);
+
+
+
+	if (!JavaObject::useGlobalRefs) {
+		env->DeleteLocalRef(javaProxy);
+	}
+
+
+
+	if (env->ExceptionCheck()) {
+		Handle<Value> jsException = titanium::JSException::fromJavaException();
+		env->ExceptionClear();
+		return jsException;
+	}
+
+
+	Handle<Number> v8Result = titanium::TypeConverter::javaIntToJsNumber(env, jResult);
+
+
+
+	return v8Result;
+
+}
+Handle<Value> TipushModule::retrieveDeviceToken(const Arguments& args)
+{
+	LOGD(TAG, "retrieveDeviceToken()");
+	HandleScope scope;
+
+	JNIEnv *env = titanium::JNIScope::getEnv();
+	if (!env) {
+		return titanium::JSException::GetJNIEnvironmentError();
+	}
+	static jmethodID methodID = NULL;
+	if (!methodID) {
+		methodID = env->GetMethodID(TipushModule::javaClass, "retrieveDeviceToken", "(Lorg/appcelerator/kroll/KrollDict;)V");
+		if (!methodID) {
+			const char *error = "Couldn't find proxy method 'retrieveDeviceToken' with signature '(Lorg/appcelerator/kroll/KrollDict;)V'";
+			LOGE(TAG, error);
+				return titanium::JSException::Error(error);
+		}
+	}
+
+	titanium::Proxy* proxy = titanium::Proxy::unwrap(args.Holder());
+
+	if (args.Length() < 1) {
+		char errorStringBuffer[100];
+		sprintf(errorStringBuffer, "retrieveDeviceToken: Invalid number of arguments. Expected 1 but got %d", args.Length());
+		return ThrowException(Exception::Error(String::New(errorStringBuffer)));
+	}
+
+	jvalue jArguments[1];
+
+
+
+
+	bool isNew_0;
+	
+	if (!args[0]->IsNull()) {
+		Local<Value> arg_0 = args[0];
+		jArguments[0].l =
+			titanium::TypeConverter::jsValueToJavaObject(env, arg_0, &isNew_0);
+	} else {
+		jArguments[0].l = NULL;
+	}
+
+	jobject javaProxy = proxy->getJavaObject();
+	env->CallVoidMethodA(javaProxy, methodID, jArguments);
+
+	if (!JavaObject::useGlobalRefs) {
+		env->DeleteLocalRef(javaProxy);
+	}
+
+
+
+			if (isNew_0) {
+				env->DeleteLocalRef(jArguments[0].l);
+			}
+
+
+	if (env->ExceptionCheck()) {
+		titanium::JSException::fromJavaException();
+		env->ExceptionClear();
+	}
+
+
+
+
+	return v8::Undefined();
+
+}
 Handle<Value> TipushModule::example(const Arguments& args)
 {
 	LOGD(TAG, "example()");
