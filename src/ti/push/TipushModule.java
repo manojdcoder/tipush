@@ -38,6 +38,7 @@ public class TipushModule extends KrollModule
 	public static final String PROPERTY_DEVICE_TOKEN = "deviceToken";
 
 	//Module constants
+	@Kroll.constant public static final int SUCCESS = ConnectionResult.SUCCESS;
 	@Kroll.constant public static final int SERVICE_DISABLED = ConnectionResult.SERVICE_DISABLED;
 	@Kroll.constant public static final int SERVICE_INVALID = ConnectionResult.SERVICE_INVALID;
 	@Kroll.constant public static final int SERVICE_MISSING = ConnectionResult.SERVICE_MISSING;
@@ -58,26 +59,26 @@ public class TipushModule extends KrollModule
 	@Kroll.method
 	public int isGooglePlayServicesAvailable()
 	{
-		return GooglePlayServicesUtil.isGooglePlayServicesAvailable(TiApplication.getInstance());
+		return GooglePlayServicesUtil.isGooglePlayServicesAvailable(TiApplication.getAppRootOrCurrentActivity());
 	}
 	
 	@Kroll.method
 	public void retrieveDeviceToken(KrollDict d)
 	{
 		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
-		final KrollFunction successCallback = (KrollFunction) d.get(TiC.PROPERTY_SUCCESS);
-		final KrollFunction errorCallback = (KrollFunction) d.get(TiC.EVENT_ERROR);
+		final KrollFunction successCallback = getFunction(d, TiC.PROPERTY_SUCCESS);
+		final KrollFunction errorCallback = getFunction(d, TiC.EVENT_ERROR);
 		new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    String token = InstanceID.getInstance(TiApplication.getInstance()).getToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+                    String token = InstanceID.getInstance(TiApplication.getAppRootOrCurrentActivity()).getToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
                     if(successCallback != null){
                 	    HashMap<String, Object> dict = new HashMap<String, Object>();
                 	    dict.put(PROPERTY_DEVICE_TOKEN, token);
                 	    successCallback.call(getKrollObject(), dict);
                     }
-                } catch (final IOException e) {
+                } catch (Exception e) {
                    if(errorCallback != null){
                 	    HashMap<String, Object> dict = new HashMap<String, Object>();
                 	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
@@ -89,20 +90,21 @@ public class TipushModule extends KrollModule
         }.execute();
 	}
 
+	@Kroll.method
     public void destroyDeviceToken(KrollDict d)
     {
     	final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
-		final KrollFunction successCallback = (KrollFunction) d.get(TiC.PROPERTY_SUCCESS);
-		final KrollFunction errorCallback = (KrollFunction) d.get(TiC.EVENT_ERROR);
+		final KrollFunction successCallback = getFunction(d, TiC.PROPERTY_SUCCESS);
+		final KrollFunction errorCallback = getFunction(d, TiC.EVENT_ERROR);
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    InstanceID.getInstance(TiApplication.getInstance()).deleteToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE);
+                    InstanceID.getInstance(TiApplication.getAppRootOrCurrentActivity()).deleteToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE);
                     if(successCallback != null){
                 	    successCallback.call(getKrollObject(), new HashMap<String, Object>());
                     }
-                } catch (final IOException e) {
+                } catch (Exception e) {
                 	if(errorCallback != null){
                  	    HashMap<String, Object> dict = new HashMap<String, Object>();
                  	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
@@ -113,5 +115,21 @@ public class TipushModule extends KrollModule
             }
         }.execute();
     }
+	
+	protected KrollFunction getFunction(KrollDict d, String property)
+	{
+		KrollFunction kFunction;
+		if (d.containsKey(property)) {
+			Object obj = d.get(property);
+			if (obj instanceof KrollFunction) {
+				kFunction = (KrollFunction) obj; 
+			} else {
+				kFunction = null;
+			}
+		} else {
+			kFunction = null;
+		}
+		return kFunction;
+	}
 }
 
