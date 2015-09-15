@@ -1,39 +1,90 @@
-// This is a test harness for your module
-// You should do something interesting in this harness
-// to test out the module and to provide instructions
-// to users on how to use it by example.
+var TiPush = require("ti.push");
+var isAvailable = TiPush.isGooglePlayServicesAvailable();
+switch (isAvailable) {
+case TiPush.SERVICE_DISABLED:
+	Ti.API.info("SERVICE_DISABLED");
+	break;
 
+case TiPush.SERVICE_INVALID:
+	Ti.API.info("SERVICE_INVALID");
+	break;
 
-// open a single window
-var win = Ti.UI.createWindow({
-	backgroundColor:'white'
-});
-var label = Ti.UI.createLabel();
-win.add(label);
-win.open();
+case TiPush.SERVICE_MISSING:
+	Ti.API.info("SERVICE_MISSING");
+	break;
 
-// TODO: write your module tests here
-var tipush = require('ti.push');
-Ti.API.info("module is => " + tipush);
+case TiPush.SERVICE_UPDATING:
+	Ti.API.info("SERVICE_UPDATING");
+	break;
 
-label.text = tipush.example();
+case TiPush.SERVICE_VERSION_UPDATE_REQUIRED:
+	Ti.API.info("SERVICE_VERSION_UPDATE_REQUIRED");
+	break;
 
-Ti.API.info("module exampleProp is => " + tipush.exampleProp);
-tipush.exampleProp = "This is a test value";
+case TiPush.SUCCESS:
+	Ti.API.info("SUCCESS");
+	break;
 
-if (Ti.Platform.name == "android") {
-	var proxy = tipush.createExample({
-		message: "Creating an example Proxy",
-		backgroundColor: "red",
-		width: 100,
-		height: 100,
-		top: 100,
-		left: 150
-	});
-
-	proxy.printMessage("Hello world!");
-	proxy.message = "Hi world!.  It's me again.";
-	proxy.printMessage("Hello world!");
-	win.add(proxy);
+default:
+	Ti.API.info("Something went wrong, no matches : " + isAvailable);
 }
 
+function update() {
+	TiPush.updateGooglePlayServices();
+}
+
+function getToken() {
+	TiPush.retrieveDeviceToken({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
+
+function deleteToken() {
+	TiPush.destroyDeviceToken({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
+
+var window = Ti.UI.createWindow({
+	backgroundColor : "#FFFFFF",
+	layout : "vertical"
+});
+
+var registerBtn = Ti.UI.createButton({
+	title : "Register",
+	top : "120",
+	id : "__alloyId0"
+});
+window.add(registerBtn);
+
+var unregisterBtn = Ti.UI.createButton({
+	title : "Un-Register",
+	top : "20",
+	id : "__alloyId1"
+});
+window.add(unregisterBtn);
+
+var updateBtn = Ti.UI.createButton({
+	title : "Update",
+	top : "20",
+	id : "__alloyId2"
+});
+window.add(updateBtn);
+
+registerBtn.addEventListener("click", getToken);
+unregisterBtn.addEventListener("click", deleteToken);
+updateBtn.addEventListener("click", update);
+
+window.open();
