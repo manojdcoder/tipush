@@ -8,7 +8,6 @@
  */
 package ti.push;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 import org.appcelerator.kroll.KrollDict;
@@ -20,6 +19,8 @@ import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.kroll.common.Log;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -27,102 +28,118 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 
-@Kroll.module(name="Tipush", id="ti.push")
-public class TipushModule extends KrollModule
-{
+@Kroll.module(name = "Tipush", id = "ti.push")
+public class TipushModule extends KrollModule {
 
 	private static final String TAG = "TipushModule";
-	
-	//Properties
+
+	// Properties
 	public static final String PROPERTY_SENDER_ID = "senderId";
 	public static final String PROPERTY_DEVICE_TOKEN = "deviceToken";
 
-	//Module constants
-	@Kroll.constant public static final int SUCCESS = ConnectionResult.SUCCESS;
-	@Kroll.constant public static final int SERVICE_DISABLED = ConnectionResult.SERVICE_DISABLED;
-	@Kroll.constant public static final int SERVICE_INVALID = ConnectionResult.SERVICE_INVALID;
-	@Kroll.constant public static final int SERVICE_MISSING = ConnectionResult.SERVICE_MISSING;
-	@Kroll.constant public static final int SERVICE_UPDATING = ConnectionResult.SERVICE_UPDATING;
-	@Kroll.constant public static final int SERVICE_VERSION_UPDATE_REQUIRED = ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED;
+	// Module constants
+	@Kroll.constant
+	public static final int SUCCESS = ConnectionResult.SUCCESS;
+	@Kroll.constant
+	public static final int SERVICE_DISABLED = ConnectionResult.SERVICE_DISABLED;
+	@Kroll.constant
+	public static final int SERVICE_INVALID = ConnectionResult.SERVICE_INVALID;
+	@Kroll.constant
+	public static final int SERVICE_MISSING = ConnectionResult.SERVICE_MISSING;
+	@Kroll.constant
+	public static final int SERVICE_UPDATING = ConnectionResult.SERVICE_UPDATING;
+	@Kroll.constant
+	public static final int SERVICE_VERSION_UPDATE_REQUIRED = ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED;
 
-	public TipushModule()
-	{
+	public TipushModule() {
 		super();
 	}
 
 	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app)
-	{
+	public static void onAppCreate(TiApplication app) {
 		Log.d(TAG, "inside onAppCreate");
-	}
-	
-	@Kroll.method
-	public int isGooglePlayServicesAvailable()
-	{
-		return GooglePlayServicesUtil.isGooglePlayServicesAvailable(TiApplication.getAppRootOrCurrentActivity());
-	}
-	
-	@Kroll.method
-	public void retrieveDeviceToken(KrollDict d)
-	{
-		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
-		final KrollFunction successCallback = getFunction(d, TiC.PROPERTY_SUCCESS);
-		final KrollFunction errorCallback = getFunction(d, TiC.EVENT_ERROR);
-		new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    String token = InstanceID.getInstance(TiApplication.getAppRootOrCurrentActivity()).getToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-                    if(successCallback != null){
-                	    HashMap<String, Object> dict = new HashMap<String, Object>();
-                	    dict.put(PROPERTY_DEVICE_TOKEN, token);
-                	    successCallback.call(getKrollObject(), dict);
-                    }
-                } catch (Exception e) {
-                   if(errorCallback != null){
-                	    HashMap<String, Object> dict = new HashMap<String, Object>();
-                	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
-					    errorCallback.call(getKrollObject(), dict);
-                   }
-                }
-                return null;
-            }
-        }.execute();
 	}
 
 	@Kroll.method
-    public void destroyDeviceToken(KrollDict d)
-    {
-    	final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
-		final KrollFunction successCallback = getFunction(d, TiC.PROPERTY_SUCCESS);
+	public int isGooglePlayServicesAvailable() {
+		return GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(TiApplication
+						.getAppRootOrCurrentActivity());
+	}
+
+	@Kroll.method
+	public void retrieveDeviceToken(KrollDict d) {
+		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
+		final KrollFunction successCallback = getFunction(d,
+				TiC.PROPERTY_SUCCESS);
 		final KrollFunction errorCallback = getFunction(d, TiC.EVENT_ERROR);
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    InstanceID.getInstance(TiApplication.getAppRootOrCurrentActivity()).deleteToken(senderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE);
-                    if(successCallback != null){
-                	    successCallback.call(getKrollObject(), new HashMap<String, Object>());
-                    }
-                } catch (Exception e) {
-                	if(errorCallback != null){
-                 	    HashMap<String, Object> dict = new HashMap<String, Object>();
-                 	    dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
- 					    errorCallback.call(getKrollObject(), dict);
-                    }
-                }
-                return null;
-            }
-        }.execute();
-    }
-	
-	protected KrollFunction getFunction(KrollDict d, String property)
-	{
+		new AsyncTask<Void, Void, Void>() {
+			@Override
+			protected Void doInBackground(Void... params) {
+				try {
+					String token = InstanceID.getInstance(
+							TiApplication.getAppRootOrCurrentActivity())
+							.getToken(senderId,
+									GoogleCloudMessaging.INSTANCE_ID_SCOPE,
+									null);
+					if (successCallback != null) {
+						HashMap<String, Object> dict = new HashMap<String, Object>();
+						dict.put(PROPERTY_DEVICE_TOKEN, token);
+						successCallback.call(getKrollObject(), dict);
+					}
+				} catch (Exception e) {
+					if (errorCallback != null) {
+						HashMap<String, Object> dict = new HashMap<String, Object>();
+						dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
+						errorCallback.call(getKrollObject(), dict);
+					}
+				}
+				return null;
+			}
+		}.execute();
+	}
+
+	@Kroll.method
+	public void destroyDeviceToken(KrollDict d) {
+		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
+		final KrollFunction successCallback = getFunction(d,
+				TiC.PROPERTY_SUCCESS);
+		final KrollFunction errorCallback = getFunction(d, TiC.EVENT_ERROR);
+		new AsyncTask<Void, Void, Void>() {
+			@Override
+			protected Void doInBackground(Void... params) {
+				try {
+					InstanceID.getInstance(
+							TiApplication.getAppRootOrCurrentActivity())
+							.deleteToken(senderId,
+									GoogleCloudMessaging.INSTANCE_ID_SCOPE);
+					if (successCallback != null) {
+						successCallback.call(getKrollObject(),
+								new HashMap<String, Object>());
+					}
+				} catch (Exception e) {
+					if (errorCallback != null) {
+						HashMap<String, Object> dict = new HashMap<String, Object>();
+						dict.put(TiC.EVENT_PROPERTY_ERROR, e.getMessage());
+						errorCallback.call(getKrollObject(), dict);
+					}
+				}
+				return null;
+			}
+		}.execute();
+	}
+
+	@Kroll.method
+	public void updateGooglePlayServices() {
+		TiApplication.getInstance().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.gms")));
+	}
+
+	protected KrollFunction getFunction(KrollDict d, String property) {
 		KrollFunction kFunction;
 		if (d.containsKey(property)) {
 			Object obj = d.get(property);
 			if (obj instanceof KrollFunction) {
-				kFunction = (KrollFunction) obj; 
+				kFunction = (KrollFunction) obj;
 			} else {
 				kFunction = null;
 			}
@@ -132,4 +149,3 @@ public class TipushModule extends KrollModule
 		return kFunction;
 	}
 }
-
