@@ -15,4 +15,4 @@ name: tipush
 moduleid: ti.push
 guid: 0315afc4-9658-479a-a967-ccfe568d7146
 platform: android
-minsdk: 3.5.1.GA
+minsdk: 4.0.0.GA

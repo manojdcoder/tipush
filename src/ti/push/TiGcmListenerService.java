@@ -9,6 +9,7 @@ import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.util.TiColorHelper;
 import org.appcelerator.titanium.util.TiRHelper;
 import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
+import org.appcelerator.kroll.common.Log;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,20 +24,19 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
 public class TiGcmListenerService extends GcmListenerService {
 
-	private static final String LCAT = "TiGcmListenerService";
+	private static final String TAG = "TiGcmListenerService";
 
 	// private
 	private final static AtomicInteger counter = new AtomicInteger(0);
 
 	@Override
 	public void onMessageReceived(String from, Bundle data) {
-		Log.d(LCAT, "message received");
+		Log.d(TAG, "message received");
 		sendNotification(data);
 	}
 
@@ -51,7 +51,7 @@ public class TiGcmListenerService extends GcmListenerService {
 		launcherIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, payload);
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				launcherIntent, PendingIntent.FLAG_ONE_SHOT);
+				launcherIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
 				this)
@@ -122,7 +122,7 @@ public class TiGcmListenerService extends GcmListenerService {
 			appInfo = getPackageManager().getApplicationInfo(getPackageName(),
 					0);
 		} catch (NameNotFoundException e) {
-			Log.e(LCAT, "not able to find the app icon");
+			Log.e(TAG, "not able to find the app icon");
 		}
 
 		int icon = 0;
@@ -203,7 +203,7 @@ public class TiGcmListenerService extends GcmListenerService {
 			try {
 				icon = TiRHelper.getApplicationResource(type + "." + name);
 			} catch (ResourceNotFoundException ex) {
-				Log.e(LCAT, type + "." + name
+				Log.e(TAG, type + "." + name
 						+ " not found; make sure it's in platform/android/res/"
 						+ type);
 			}

@@ -13,12 +13,15 @@ import java.util.HashMap;
 import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollModule;
+import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.titanium.TiApplication;
+import org.appcelerator.titanium.TiBaseActivity;
 import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.kroll.common.Log;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -61,6 +64,20 @@ public class TipushModule extends KrollModule {
 	@Kroll.onAppCreate
 	public static void onAppCreate(TiApplication app) {
 		Log.d(TAG, "inside onAppCreate");
+	}
+
+	@Override
+	public void onStart(Activity activity) {
+		Log.d(TAG, "[MODULE LIFECYCLE EVENT] start");
+		fireCallback();
+		super.onStart(activity);
+	}
+
+	@Override
+	public void onResume(Activity activity) {
+		Log.d(TAG, "[MODULE LIFECYCLE EVENT] resume");
+		fireCallback();
+		super.onResume(activity);
 	}
 
 	@Kroll.method
@@ -140,6 +157,10 @@ public class TipushModule extends KrollModule {
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP
 				| Intent.FLAG_ACTIVITY_NEW_TASK);
 		TiApplication.getInstance().startActivity(intent);
+	}
+
+	protected void fireCallback() {
+		Log.i(TAG, TiApplication.getAppRootOrCurrentActivity().getIntent().getExtras().toString());
 	}
 
 	protected KrollFunction getFunction(KrollDict d, String property) {
