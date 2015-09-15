@@ -36,6 +36,9 @@ public class TipushModule extends KrollModule {
 	// Properties
 	public static final String PROPERTY_SENDER_ID = "senderId";
 	public static final String PROPERTY_DEVICE_TOKEN = "deviceToken";
+	public static final String PROPERTY_PAYLOAD = "payload";
+	public static final String PROPERTY_SMALL_ICON = "smallIcon";
+	public static final String PROPERTY_LARGE_ICON = "largeIcon";
 
 	// Module constants
 	@Kroll.constant
@@ -100,7 +103,7 @@ public class TipushModule extends KrollModule {
 	}
 
 	@Kroll.method
-	public void destroyDeviceToken(KrollDict d) {
+	public void clearStatus(KrollDict d) {
 		final String senderId = TiConvert.toString(d, PROPERTY_SENDER_ID);
 		final KrollFunction successCallback = getFunction(d,
 				TiC.PROPERTY_SUCCESS);
@@ -131,7 +134,12 @@ public class TipushModule extends KrollModule {
 
 	@Kroll.method
 	public void updateGooglePlayServices() {
-		TiApplication.getInstance().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.gms")));
+		Intent intent = new Intent(Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=com.google.android.gms"));
+		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+				| Intent.FLAG_ACTIVITY_SINGLE_TOP
+				| Intent.FLAG_ACTIVITY_NEW_TASK);
+		TiApplication.getInstance().startActivity(intent);
 	}
 
 	protected KrollFunction getFunction(KrollDict d, String property) {

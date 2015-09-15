@@ -1,8 +1,11 @@
 package ti.push;
 
+import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.appcelerator.titanium.TiApplication;
+import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.util.TiColorHelper;
 import org.appcelerator.titanium.util.TiRHelper;
 import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
@@ -39,33 +42,79 @@ public class TiGcmListenerService extends GcmListenerService {
 
 	private void sendNotification(Bundle data) {
 
-		Intent notificationIntent = new Intent(this, TiGcmListenerService.class);
-		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-				| Intent.FLAG_ACTIVITY_SINGLE_TOP
-				| Intent.FLAG_ACTIVITY_NEW_TASK);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, PendingIntent.FLAG_ONE_SHOT);
+		HashMap<String, Object> payload = toHashMap(data);
 
-		String title = data.getString("title");
-		if (title == null) {
-			title = TiApplication.getInstance().getAppInfo().getName();
-		}
+		Intent launcherIntent = getPackageManager().getLaunchIntentForPackage(
+				getPackageName());
+		launcherIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
+				| Intent.FLAG_ACTIVITY_NEW_TASK);
+		launcherIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, payload);
+
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				launcherIntent, PendingIntent.FLAG_ONE_SHOT);
 
 		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
-				this).setContentIntent(contentIntent).setContentTitle(title)
-				.setContentText(data.getString("message"))
-				.setWhen(data.getLong("when", System.currentTimeMillis()));
+				this)
+				.setContentIntent(contentIntent)
+				.setWhen(
+						data.getLong(TiC.PROPERTY_WHEN,
+								System.currentTimeMillis()))
+				.setAutoCancel(true);
 
-		String ticker = data.getString("ticker");
-		if (ticker != null) {
-			notificationBuilder.setTicker(ticker);
+		String contentTitle = "";
+		if (payload.containsKey(TiC.PROPERTY_CONTENT_TITLE)) {
+			contentTitle = (String) payload.get(TiC.PROPERTY_CONTENT_TITLE);
+		} else if (payload.containsKey(TiC.PROPERTY_TITLE)) {
+			contentTitle = (String) payload.get(TiC.PROPERTY_TITLE);
+		} else {
+			contentTitle = TiApplication.getInstance().getAppInfo().getName();
+		}
+		notificationBuilder.setContentTitle(contentTitle);
+
+		String contentText = "";
+		if (payload.containsKey(TiC.PROPERTY_CONTENT_TEXT)) {
+			contentText = (String) payload.get(TiC.PROPERTY_CONTENT_TEXT);
+		} else if (payload.containsKey(TiC.PROPERTY_MESSAGE)) {
+			contentText = (String) payload.get(TiC.PROPERTY_MESSAGE);
+		}
+		notificationBuilder.setContentText(contentText);
+
+		if (payload.containsKey(TiC.PROPERTY_TICKER_TEXT)) {
+			notificationBuilder.setTicker((String) payload
+					.get(TiC.PROPERTY_TICKER_TEXT));
 		}
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			String color = data.getString("color");
-			if (color != null) {
-				notificationBuilder.setColor(TiColorHelper.parseColor(color));
+		if (payload.containsKey(TiC.PROPERTY_NUMBER)) {
+			notificationBuilder.setNumber((Integer) payload
+					.get(TiC.PROPERTY_NUMBER));
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_DEFAULTS)) {
+			notificationBuilder.setDefaults((Integer) payload
+					.get(TiC.PROPERTY_DEFAULTS));
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_SOUND)) {
+			String sound = (String) payload.get(TiC.PROPERTY_SOUND);
+			if (sound != null) {
+				if ("default".equals(sound)) {
+					notificationBuilder.setSound(RingtoneManager
+							.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+				} else {
+					notificationBuilder.setSound(Uri
+							.parse("android.resource://" + getPackageName()
+									+ "/" + getResource("raw", sound)));
+				}
 			}
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_LED_ARGB)
+				&& payload.containsKey(TiC.PROPERTY_LED_ON_MS)
+				&& payload.containsKey(TiC.PROPERTY_LED_OFF_MS)) {
+			notificationBuilder.setLights(TiColorHelper
+					.parseColor((String) payload.get(TiC.PROPERTY_LED_ARGB)),
+					(Integer) payload.get(TiC.PROPERTY_LED_ON_MS),
+					(Integer) payload.get(TiC.PROPERTY_LED_OFF_MS));
 		}
 
 		ApplicationInfo appInfo = null;
@@ -76,58 +125,55 @@ public class TiGcmListenerService extends GcmListenerService {
 			Log.e(LCAT, "not able to find the app icon");
 		}
 
-		String smallIconPath = data.getString("icon");
-		if (smallIconPath == null) {
-			smallIconPath = data.getString("smallIcon");
+		int icon = 0;
+		if (payload.containsKey(TiC.PROPERTY_ICON)) {
+			icon = getResource("drawable",
+					(String) payload.get(TiC.PROPERTY_ICON));
+		} else if (appInfo != null) {
+			icon = appInfo.icon;
 		}
-		if (smallIconPath == null) {
-			if (appInfo != null) {
-				notificationBuilder.setSmallIcon(appInfo.icon);
-			}
+
+		int smallIcon = 0;
+		if (payload.containsKey(TipushModule.PROPERTY_SMALL_ICON)) {
+			smallIcon = getResource("drawable",
+					(String) payload.get(TipushModule.PROPERTY_SMALL_ICON));
 		} else {
-			notificationBuilder.setSmallIcon(getResource("drawable",
-					smallIconPath));
+			smallIcon = icon;
 		}
+		notificationBuilder.setSmallIcon(smallIcon);
 
-		String largeIconPath = data.getString("largeIcon");
-		if (largeIconPath == null) {
-			if (appInfo != null) {
-				Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
-						appInfo.icon);
-				if (bitmap != null) {
-					notificationBuilder.setLargeIcon(bitmap);
-				}
-			}
+		int largeIcon = 0;
+		if (payload.containsKey(TipushModule.PROPERTY_LARGE_ICON)) {
+			largeIcon = getResource("drawable",
+					(String) payload.get(TipushModule.PROPERTY_LARGE_ICON));
 		} else {
-			Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
-					getResource("drawable", largeIconPath));
-			if (bitmap != null) {
-				notificationBuilder.setLargeIcon(bitmap);
+			largeIcon = icon;
+		}
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), largeIcon);
+		if (bitmap != null) {
+			notificationBuilder.setLargeIcon(bitmap);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			if (payload.containsKey(TiC.PROPERTY_PRIORITY)) {
+				notificationBuilder.setPriority((Integer) payload
+						.get(TiC.PROPERTY_PRIORITY));
 			}
 		}
 
-		String soundPath = data.getString("sound");
-		if (soundPath != null) {
-			if ("default".equals(soundPath)) {
-				notificationBuilder.setSound(RingtoneManager
-						.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-			} else {
-				notificationBuilder.setSound(Uri.parse("android.resource://"
-						+ getPackageName() + "/"
-						+ getResource("raw", soundPath)));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			if (payload.containsKey(TiC.PROPERTY_VISIBILITY)) {
+				notificationBuilder.setVisibility((Integer) payload
+						.get(TiC.PROPERTY_VISIBILITY));
 			}
-		}
-
-		Boolean light = data.getBoolean("light");
-		if (light) {
-			notificationBuilder.setLights(
-					TiColorHelper.parseColor(data.getString("lightColor")),
-					300, 100);
-		}
-
-		Boolean vibrate = data.getBoolean("vibrate");
-		if (vibrate) {
-			notificationBuilder.setVibrate(new long[] { 1000 });
+			if (payload.containsKey(TiC.PROPERTY_CATEGORY)) {
+				notificationBuilder.setCategory((String) payload
+						.get(TiC.PROPERTY_CATEGORY));
+			}
+			if (payload.containsKey(TiC.PROPERTY_COLOR)) {
+				notificationBuilder.setColor(TiColorHelper
+						.parseColor((String) payload.get(TiC.PROPERTY_COLOR)));
+			}
 		}
 
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
@@ -136,6 +182,15 @@ public class TiGcmListenerService extends GcmListenerService {
 
 	private int getId() {
 		return counter.incrementAndGet();
+	}
+
+	private HashMap<String, Object> toHashMap(Bundle data) {
+		HashMap<String, Object> hashMap = new HashMap<String, Object>();
+		Set<String> keySet = data.keySet();
+		for (final String key : keySet) {
+			hashMap.put(key, data.get(key));
+		}
+		return hashMap;
 	}
 
 	private int getResource(String type, String name) {
