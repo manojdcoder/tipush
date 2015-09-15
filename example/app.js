@@ -64,22 +64,19 @@ var window = Ti.UI.createWindow({
 
 var registerBtn = Ti.UI.createButton({
 	title : "Register",
-	top : "120",
-	id : "__alloyId0"
+	top : "120"
 });
 window.add(registerBtn);
 
 var unregisterBtn = Ti.UI.createButton({
 	title : "Un-Register",
-	top : "20",
-	id : "__alloyId1"
+	top : "20"
 });
 window.add(unregisterBtn);
 
 var updateBtn = Ti.UI.createButton({
 	title : "Update",
-	top : "20",
-	id : "__alloyId2"
+	top : "20"
 });
 window.add(updateBtn);
 
