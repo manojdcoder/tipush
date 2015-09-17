@@ -16,7 +16,6 @@ import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.titanium.TiApplication;
-import org.appcelerator.titanium.TiBaseActivity;
 import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.kroll.common.Log;
@@ -35,6 +34,7 @@ import com.google.android.gms.iid.InstanceID;
 public class TipushModule extends KrollModule {
 
 	private static final String TAG = "TipushModule";
+	private static boolean isActive = false;
 
 	// Properties
 	public static final String PROPERTY_SENDER_ID = "senderId";
@@ -42,6 +42,7 @@ public class TipushModule extends KrollModule {
 	public static final String PROPERTY_PAYLOAD = "payload";
 	public static final String PROPERTY_SMALL_ICON = "smallIcon";
 	public static final String PROPERTY_LARGE_ICON = "largeIcon";
+	public static final String EVENT_CALLBACK = "callback";
 
 	// Module constants
 	@Kroll.constant
@@ -68,16 +69,34 @@ public class TipushModule extends KrollModule {
 
 	@Override
 	public void onStart(Activity activity) {
-		Log.d(TAG, "[MODULE LIFECYCLE EVENT] start");
-		fireCallback();
+		isActive = true;
 		super.onStart(activity);
 	}
 
 	@Override
-	public void onResume(Activity activity) {
-		Log.d(TAG, "[MODULE LIFECYCLE EVENT] resume");
-		fireCallback();
-		super.onResume(activity);
+	public void onDestroy(Activity activity) {
+		isActive = false;
+		super.onDestroy(activity);
+	}
+
+	@Override
+	public void listenerAdded(String type, int count, KrollProxy proxy) {
+		if (EVENT_CALLBACK.equals(type) && count == 1) {
+			fireCallback(getActivity().getIntent().getExtras()
+					.getString(PROPERTY_PAYLOAD));
+		}
+	}
+
+	protected void fireCallback(String payload) {
+		if (payload != null) {
+			HashMap<String, Object> params = new HashMap<String, Object>();
+			params.put(PROPERTY_PAYLOAD, payload);
+			fireEvent(EVENT_CALLBACK, params);
+		}
+	}
+
+	public static boolean isActive() {
+		return isActive;
 	}
 
 	@Kroll.method
@@ -85,6 +104,16 @@ public class TipushModule extends KrollModule {
 		return GooglePlayServicesUtil
 				.isGooglePlayServicesAvailable(TiApplication
 						.getAppRootOrCurrentActivity());
+	}
+
+	@Kroll.method
+	public void updateGooglePlayServices() {
+		Intent intent = new Intent(Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=com.google.android.gms"));
+		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+				| Intent.FLAG_ACTIVITY_SINGLE_TOP
+				| Intent.FLAG_ACTIVITY_NEW_TASK);
+		TiApplication.getInstance().startActivity(intent);
 	}
 
 	@Kroll.method
@@ -147,20 +176,6 @@ public class TipushModule extends KrollModule {
 				return null;
 			}
 		}.execute();
-	}
-
-	@Kroll.method
-	public void updateGooglePlayServices() {
-		Intent intent = new Intent(Intent.ACTION_VIEW,
-				Uri.parse("market://details?id=com.google.android.gms"));
-		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-				| Intent.FLAG_ACTIVITY_SINGLE_TOP
-				| Intent.FLAG_ACTIVITY_NEW_TASK);
-		TiApplication.getInstance().startActivity(intent);
-	}
-
-	protected void fireCallback() {
-		Log.i(TAG, TiApplication.getAppRootOrCurrentActivity().getIntent().getExtras().toString());
 	}
 
 	protected KrollFunction getFunction(KrollDict d, String property) {

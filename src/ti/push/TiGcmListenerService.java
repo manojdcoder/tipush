@@ -10,6 +10,7 @@ import org.appcelerator.titanium.util.TiColorHelper;
 import org.appcelerator.titanium.util.TiRHelper;
 import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
 import org.appcelerator.kroll.common.Log;
+import org.json.JSONObject;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -46,9 +47,9 @@ public class TiGcmListenerService extends GcmListenerService {
 
 		Intent launcherIntent = getPackageManager().getLaunchIntentForPackage(
 				getPackageName());
-		launcherIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
-				| Intent.FLAG_ACTIVITY_NEW_TASK);
-		launcherIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, payload);
+		launcherIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		launcherIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, new JSONObject(
+				payload).toString());
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				launcherIntent, PendingIntent.FLAG_UPDATE_CURRENT);
