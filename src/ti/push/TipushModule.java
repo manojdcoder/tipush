@@ -34,7 +34,7 @@ import com.google.android.gms.iid.InstanceID;
 public class TipushModule extends KrollModule {
 
 	private static final String TAG = "TipushModule";
-	private static boolean isActive = false;
+	private static KrollProxy mProxy;
 
 	// Properties
 	public static final String PROPERTY_SENDER_ID = "senderId";
@@ -68,35 +68,31 @@ public class TipushModule extends KrollModule {
 	}
 
 	@Override
-	public void onStart(Activity activity) {
-		isActive = true;
-		super.onStart(activity);
-	}
-
-	@Override
 	public void onDestroy(Activity activity) {
-		isActive = false;
+		mProxy = null;
 		super.onDestroy(activity);
 	}
 
 	@Override
 	public void listenerAdded(String type, int count, KrollProxy proxy) {
 		if (EVENT_CALLBACK.equals(type) && count == 1) {
+			mProxy = proxy;
 			fireCallback(getActivity().getIntent().getExtras()
 					.getString(PROPERTY_PAYLOAD));
 		}
 	}
 
-	protected void fireCallback(String payload) {
-		if (payload != null) {
+	public static void fireCallback(String payload) {
+		if (mProxy != null && mProxy.hasListeners(EVENT_CALLBACK)
+				&& payload != null) {
 			HashMap<String, Object> params = new HashMap<String, Object>();
 			params.put(PROPERTY_PAYLOAD, payload);
-			fireEvent(EVENT_CALLBACK, params);
+			mProxy.fireEvent(EVENT_CALLBACK, params);
 		}
 	}
 
 	public static boolean isActive() {
-		return isActive;
+		return mProxy != null;
 	}
 
 	@Kroll.method

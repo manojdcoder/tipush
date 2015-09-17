@@ -12,6 +12,7 @@ import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
 import org.appcelerator.kroll.common.Log;
 import org.json.JSONObject;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -45,14 +46,16 @@ public class TiGcmListenerService extends GcmListenerService {
 
 		HashMap<String, Object> payload = toHashMap(data);
 
-		Intent launcherIntent = getPackageManager().getLaunchIntentForPackage(
-				getPackageName());
-		launcherIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		launcherIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, new JSONObject(
-				payload).toString());
+		Intent notificationIntent = new Intent(this,
+				NotificationHandlerActivity.class);
+		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
+				| Intent.FLAG_ACTIVITY_CLEAR_TOP
+				| Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		notificationIntent.putExtra(TipushModule.PROPERTY_PAYLOAD,
+				new JSONObject(payload).toString());
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				launcherIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
 				this)
@@ -90,40 +93,14 @@ public class TiGcmListenerService extends GcmListenerService {
 					.get(TiC.PROPERTY_NUMBER));
 		}
 
-		if (payload.containsKey(TiC.PROPERTY_DEFAULTS)) {
-			notificationBuilder.setDefaults((Integer) payload
-					.get(TiC.PROPERTY_DEFAULTS));
-		}
-
-		if (payload.containsKey(TiC.PROPERTY_SOUND)) {
-			String sound = (String) payload.get(TiC.PROPERTY_SOUND);
-			if (sound != null) {
-				if ("default".equals(sound)) {
-					notificationBuilder.setSound(RingtoneManager
-							.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-				} else {
-					notificationBuilder.setSound(Uri
-							.parse("android.resource://" + getPackageName()
-									+ "/" + getResource("raw", sound)));
-				}
-			}
-		}
-
-		if (payload.containsKey(TiC.PROPERTY_LED_ARGB)
-				&& payload.containsKey(TiC.PROPERTY_LED_ON_MS)
-				&& payload.containsKey(TiC.PROPERTY_LED_OFF_MS)) {
-			notificationBuilder.setLights(TiColorHelper
-					.parseColor((String) payload.get(TiC.PROPERTY_LED_ARGB)),
-					(Integer) payload.get(TiC.PROPERTY_LED_ON_MS),
-					(Integer) payload.get(TiC.PROPERTY_LED_OFF_MS));
-		}
-
 		ApplicationInfo appInfo = null;
+		String packageName = TiApplication.getInstance()
+				.getApplicationContext().getPackageName();
 		try {
-			appInfo = getPackageManager().getApplicationInfo(getPackageName(),
-					0);
+			appInfo = TiApplication.getInstance().getApplicationContext()
+					.getPackageManager().getApplicationInfo(packageName, 0);
 		} catch (NameNotFoundException e) {
-			Log.e(TAG, "not able to find the app icon");
+			Log.e(TAG, "not able to find app info for " + packageName);
 		}
 
 		int icon = 0;
@@ -153,6 +130,36 @@ public class TiGcmListenerService extends GcmListenerService {
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), largeIcon);
 		if (bitmap != null) {
 			notificationBuilder.setLargeIcon(bitmap);
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_DEFAULTS)) {
+			notificationBuilder.setDefaults((Integer) payload
+					.get(TiC.PROPERTY_DEFAULTS));
+		} else {
+			notificationBuilder.setDefaults(Notification.DEFAULT_ALL);
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_SOUND)) {
+			String sound = (String) payload.get(TiC.PROPERTY_SOUND);
+			if (sound != null) {
+				if ("default".equals(sound)) {
+					notificationBuilder.setSound(RingtoneManager
+							.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+				} else {
+					notificationBuilder.setSound(Uri
+							.parse("android.resource://" + packageName + "/"
+									+ getResource("raw", sound)));
+				}
+			}
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_LED_ARGB)
+				&& payload.containsKey(TiC.PROPERTY_LED_ON_MS)
+				&& payload.containsKey(TiC.PROPERTY_LED_OFF_MS)) {
+			notificationBuilder.setLights(TiColorHelper
+					.parseColor((String) payload.get(TiC.PROPERTY_LED_ARGB)),
+					(Integer) payload.get(TiC.PROPERTY_LED_ON_MS),
+					(Integer) payload.get(TiC.PROPERTY_LED_OFF_MS));
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

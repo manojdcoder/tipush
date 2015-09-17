@@ -1,34 +1,10 @@
-var window = Ti.UI.createWindow({
-	backgroundColor : "#FFFFFF",
-	layout : "vertical"
-});
-window.open();
-
-var registerBtn = Ti.UI.createButton({
-	title : "Register",
-	top : "120"
-});
-window.add(registerBtn);
-
-var unregisterBtn = Ti.UI.createButton({
-	title : "Un-Register",
-	top : "20"
-});
-window.add(unregisterBtn);
-
-var updateBtn = Ti.UI.createButton({
-	title : "Update",
-	top : "20"
-});
-window.add(updateBtn);
-
-var newWinBtn = Ti.UI.createButton({
-	title : "Open new window",
-	top : "20"
-});
-window.add(newWinBtn);
-
 var TiPush = require("ti.push");
+TiPush.addEventListener("callback", function(e) {
+	console.log("callback fired");
+	//test parsing
+	var data = JSON.parse(e.payload);
+	label.text = JSON.stringify(data);
+});
 
 var isAvailable = TiPush.isGooglePlayServicesAvailable();
 switch (isAvailable) {
@@ -54,9 +30,52 @@ default:
 	Ti.API.info("Something went wrong, no matches : " + isAvailable);
 }
 
-function didCallback(e) {
+var window = Ti.UI.createWindow({
+	backgroundColor : "#FFFFFF"
+});
+window.open();
 
-}
+var scrollView = Ti.UI.createScrollView({
+	layout : "vertical"
+});
+window.add(scrollView);
+
+var registerBtn = Ti.UI.createButton({
+	title : "Register",
+	top : "20"
+});
+registerBtn.addEventListener("click", getToken);
+scrollView.add(registerBtn);
+
+var unregisterBtn = Ti.UI.createButton({
+	title : "Un-Register",
+	top : "20"
+});
+unregisterBtn.addEventListener("click", deleteToken);
+scrollView.add(unregisterBtn);
+
+var updateBtn = Ti.UI.createButton({
+	title : "Update",
+	top : "20"
+});
+updateBtn.addEventListener("click", update);
+scrollView.add(updateBtn);
+
+var newWinBtn = Ti.UI.createButton({
+	title : "Open new window",
+	top : "20"
+});
+newWinBtn.addEventListener("click", openNewWin);
+scrollView.add(newWinBtn);
+
+var label = Ti.UI.createLabel({
+	top : 20,
+	left : 12,
+	right : 12,
+	textAlign : "center",
+	color : "#000"
+});
+scrollView.add(label);
 
 function update() {
 	TiPush.updateGooglePlayServices();
@@ -86,20 +105,8 @@ function deleteToken() {
 	});
 }
 
-/**
- * for testing purpose
- * open root activity
- * without clearing top
- */
 function openNewWin() {
 	Ti.UI.createWindow({
 		backgroundColor : "#FFFFFF"
 	}).open();
 }
-
-registerBtn.addEventListener("click", getToken);
-unregisterBtn.addEventListener("click", deleteToken);
-updateBtn.addEventListener("click", update);
-newWinBtn.addEventListener("click", openNewWin);
-
-TiPush.addEventListener("callback", didCallback);
