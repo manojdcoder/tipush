@@ -33,6 +33,17 @@ public class TiGcmListenerService extends GcmListenerService {
 
 	private static final String TAG = "TiGcmListenerService";
 
+	private static final String PROPERTY_BIG_TITLE = "bigTitle";
+	private static final String PROPERTY_BIG_CONTENT_TITLE = "bigContentTitle";
+	private static final String PROPERTY_BIG_MESSAGE = "bigMessage";
+	private static final String PROPERTY_BIG_TEXT = "bigText";
+	private static final String PROPERTY_SUMMARY_TEXT = "summaryText";
+	private static final String PROPERTY_LINES = "lines";
+	private static final String PROPERTY_SMALL_ICON = "smallIcon";
+	private static final String PROPERTY_LARGE_ICON = "largeIcon";
+	private static final String PROPERTY_BIG_LARGE_ICON = "bigLargeIcon";
+	private static final String PROPERTY_BIG_PICTURE = "bigPicture";
+
 	// private
 	private final static AtomicInteger counter = new AtomicInteger(0);
 
@@ -112,18 +123,18 @@ public class TiGcmListenerService extends GcmListenerService {
 		}
 
 		int smallIcon = 0;
-		if (payload.containsKey(TipushModule.PROPERTY_SMALL_ICON)) {
+		if (payload.containsKey(PROPERTY_SMALL_ICON)) {
 			smallIcon = getResource("drawable",
-					(String) payload.get(TipushModule.PROPERTY_SMALL_ICON));
+					(String) payload.get(PROPERTY_SMALL_ICON));
 		} else {
 			smallIcon = icon;
 		}
 		notificationBuilder.setSmallIcon(smallIcon);
 
 		int largeIcon = 0;
-		if (payload.containsKey(TipushModule.PROPERTY_LARGE_ICON)) {
+		if (payload.containsKey(PROPERTY_LARGE_ICON)) {
 			largeIcon = getResource("drawable",
-					(String) payload.get(TipushModule.PROPERTY_LARGE_ICON));
+					(String) payload.get(PROPERTY_LARGE_ICON));
 		} else {
 			largeIcon = icon;
 		}
@@ -163,6 +174,104 @@ public class TiGcmListenerService extends GcmListenerService {
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			if (payload.containsKey(TiC.PROPERTY_STYLE)) {
+				String style = (String) payload.get(TiC.PROPERTY_STYLE);
+				if (style.equals("BigTextStyle")) {
+					NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
+
+					String bigContentTitle = contentTitle;
+					if (payload.containsKey(PROPERTY_BIG_CONTENT_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_CONTENT_TITLE);
+					} else if (payload.containsKey(PROPERTY_BIG_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_TITLE);
+					}
+					bigTextStyle.setBigContentTitle(bigContentTitle);
+
+					if (payload.containsKey(PROPERTY_SUMMARY_TEXT)) {
+						bigTextStyle.setSummaryText((String) payload
+								.get(PROPERTY_SUMMARY_TEXT));
+					}
+
+					if (payload.containsKey(PROPERTY_BIG_TEXT)) {
+						bigTextStyle.bigText((String) payload
+								.get(PROPERTY_BIG_TEXT));
+					} else if (payload.containsKey(PROPERTY_BIG_MESSAGE)) {
+						bigTextStyle.bigText((String) payload
+								.get(PROPERTY_BIG_MESSAGE));
+					}
+
+					notificationBuilder.setStyle(bigTextStyle);
+				} else if (style.equals("InboxStyle")) {
+					NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+
+					String bigContentTitle = contentTitle;
+					if (payload.containsKey(PROPERTY_BIG_CONTENT_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_CONTENT_TITLE);
+					} else if (payload.containsKey(PROPERTY_BIG_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_TITLE);
+					}
+					inboxStyle.setBigContentTitle(bigContentTitle);
+
+					if (payload.containsKey(PROPERTY_SUMMARY_TEXT)) {
+						inboxStyle.setSummaryText((String) payload
+								.get(PROPERTY_SUMMARY_TEXT));
+					}
+
+					if (payload.containsKey(PROPERTY_LINES)) {
+						String lines[] = (String[]) payload.get(PROPERTY_LINES);
+						for (int i = 0; i < lines.length; i++) {
+							inboxStyle.addLine(lines[i]);
+						}
+					}
+
+					notificationBuilder.setStyle(inboxStyle);
+				} else if (style.equals("BigPictureStyle")) {
+					NotificationCompat.BigPictureStyle bigPictureStyle = new NotificationCompat.BigPictureStyle();
+
+					String bigContentTitle = contentTitle;
+					if (payload.containsKey(PROPERTY_BIG_CONTENT_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_CONTENT_TITLE);
+					} else if (payload.containsKey(PROPERTY_BIG_TITLE)) {
+						bigContentTitle = (String) payload
+								.get(PROPERTY_BIG_TITLE);
+					}
+					bigPictureStyle.setBigContentTitle(bigContentTitle);
+
+					if (payload.containsKey(PROPERTY_SUMMARY_TEXT)) {
+						bigPictureStyle.setSummaryText((String) payload
+								.get(PROPERTY_SUMMARY_TEXT));
+					}
+
+					if (payload.containsKey(PROPERTY_BIG_LARGE_ICON)) {
+						notificationBuilder
+								.setLargeIcon(BitmapFactory
+										.decodeResource(
+												getResources(),
+												getResource(
+														"drawable",
+														(String) payload
+																.get(PROPERTY_BIG_LARGE_ICON))));
+					}
+
+					if (payload.containsKey(PROPERTY_BIG_PICTURE)) {
+						notificationBuilder
+								.setLargeIcon(BitmapFactory
+										.decodeResource(
+												getResources(),
+												getResource(
+														"drawable",
+														(String) payload
+																.get(PROPERTY_BIG_PICTURE))));
+					}
+
+					notificationBuilder.setStyle(bigPictureStyle);
+				}
+			}
 			if (payload.containsKey(TiC.PROPERTY_PRIORITY)) {
 				notificationBuilder.setPriority((Integer) payload
 						.get(TiC.PROPERTY_PRIORITY));

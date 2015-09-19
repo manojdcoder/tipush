@@ -40,8 +40,6 @@ public class TipushModule extends KrollModule {
 	public static final String PROPERTY_SENDER_ID = "senderId";
 	public static final String PROPERTY_DEVICE_TOKEN = "deviceToken";
 	public static final String PROPERTY_PAYLOAD = "payload";
-	public static final String PROPERTY_SMALL_ICON = "smallIcon";
-	public static final String PROPERTY_LARGE_ICON = "largeIcon";
 	public static final String EVENT_CALLBACK = "callback";
 
 	// Module constants

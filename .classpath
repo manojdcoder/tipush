@@ -9,7 +9,8 @@
 	<classpathentry kind="lib" path="/Users/MyKingdom/Library/Application Support/Titanium/mobilesdk/osx/4.0.0.GA/android/titanium.jar"/>
 	<classpathentry kind="lib" path="/Users/MyKingdom/Library/Application Support/Titanium/mobilesdk/osx/4.0.0.GA/android/kroll-common.jar"/>
 	<classpathentry kind="lib" path="/Users/MyKingdom/Library/Application Support/Titanium/mobilesdk/osx/4.0.0.GA/android/kroll-apt.jar"/>
-	<classpathentry kind="lib" path="lib/google-play-services.jar"/>
+	<classpathentry kind="lib" path="lib/google-play-services-base.jar"/>
+	<classpathentry kind="lib" path="lib/google-play-services-gcm.jar"/>
 	<classpathentry kind="src" path=".apt_generated">
 		<attributes>
 			<attribute name="optional" value="true"/>
