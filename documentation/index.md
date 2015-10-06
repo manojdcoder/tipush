@@ -1,39 +1,122 @@
-# tipush Module
+#TiPush
 
 ## Description
 
-TODO: Enter your module description here
-
-## Accessing the tipush Module
-
-To access this module from JavaScript, you would do the following:
-
-    var tipush = require("ti.push");
-
-The tipush variable is a reference to the Module object.
-
-## Reference
-
-TODO: If your module has an API, you should document
-the reference here.
-
-### tipush.function
-
-TODO: This is an example of a module function.
-
-### tipush.property
-
-TODO: This is an example of a module property.
+GCM Push support for android.
 
 ## Usage
 
-TODO: Enter your usage example here
+```javascript
+var TiPush = require("ti.push");
+TiPush.addEventListener("callback", function(e) {
+	console.log("callback fired");
+	//test parsing
+	var data = JSON.parse(e.payload);
+	label.text = JSON.stringify(data);
+});
 
-## Author
+var isAvailable = TiPush.isGooglePlayServicesAvailable();
+switch (isAvailable) {
+case TiPush.SERVICE_DISABLED:
+	Ti.API.info("SERVICE_DISABLED");
+	break;
+case TiPush.SERVICE_INVALID:
+	Ti.API.info("SERVICE_INVALID");
+	break;
+case TiPush.SERVICE_MISSING:
+	Ti.API.info("SERVICE_MISSING");
+	break;
+case TiPush.SERVICE_UPDATING:
+	Ti.API.info("SERVICE_UPDATING");
+	break;
+case TiPush.SERVICE_VERSION_UPDATE_REQUIRED:
+	Ti.API.info("SERVICE_VERSION_UPDATE_REQUIRED");
+	break;
+case TiPush.SUCCESS:
+	Ti.API.info("SUCCESS");
+	break;
+default:
+	Ti.API.info("Something went wrong, no matches : " + isAvailable);
+}
 
-TODO: Enter your author name, email and other contact
-details you want to share here.
+var window = Ti.UI.createWindow({
+	backgroundColor : "#FFFFFF"
+});
+window.open();
 
-## License
+var scrollView = Ti.UI.createScrollView({
+	layout : "vertical"
+});
+window.add(scrollView);
 
-TODO: Enter your license/legal information here.
+var registerBtn = Ti.UI.createButton({
+	title : "Register",
+	top : "20"
+});
+registerBtn.addEventListener("click", getToken);
+scrollView.add(registerBtn);
+
+var unregisterBtn = Ti.UI.createButton({
+	title : "Un-Register",
+	top : "20"
+});
+unregisterBtn.addEventListener("click", deleteToken);
+scrollView.add(unregisterBtn);
+
+var updateBtn = Ti.UI.createButton({
+	title : "Update",
+	top : "20"
+});
+updateBtn.addEventListener("click", update);
+scrollView.add(updateBtn);
+
+var newWinBtn = Ti.UI.createButton({
+	title : "Open new window",
+	top : "20"
+});
+newWinBtn.addEventListener("click", openNewWin);
+scrollView.add(newWinBtn);
+
+var label = Ti.UI.createLabel({
+	top : 20,
+	left : 12,
+	right : 12,
+	textAlign : "center",
+	color : "#000"
+});
+scrollView.add(label);
+
+function update() {
+	TiPush.updateGooglePlayServices();
+}
+
+function getToken() {
+	TiPush.retrieveDeviceToken({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
+
+function deleteToken() {
+	TiPush.clearStatus({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
+
+function openNewWin() {
+	Ti.UI.createWindow({
+		backgroundColor : "#FFFFFF"
+	}).open();
+}
+```
