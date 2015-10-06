@@ -21,9 +21,11 @@ import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.kroll.common.Log;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.telephony.TelephonyManager;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -108,6 +110,14 @@ public class TipushModule extends KrollModule {
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP
 				| Intent.FLAG_ACTIVITY_NEW_TASK);
 		TiApplication.getInstance().startActivity(intent);
+	}
+
+	@Kroll.getProperty
+	@Kroll.method
+	public String getDeviceId() {
+		return ((TelephonyManager) TiApplication.getInstance()
+				.getApplicationContext()
+				.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
 	}
 
 	@Kroll.method

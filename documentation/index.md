@@ -49,6 +49,13 @@ var scrollView = Ti.UI.createScrollView({
 });
 window.add(scrollView);
 
+var deviceIdBtn = Ti.UI.createButton({
+	title : "Get device id",
+	top : "20"
+});
+deviceIdBtn.addEventListener("click", getDeviceId);
+scrollView.add(deviceIdBtn);
+
 var registerBtn = Ti.UI.createButton({
 	title : "Register",
 	top : "20"
@@ -85,6 +92,10 @@ var label = Ti.UI.createLabel({
 	color : "#000"
 });
 scrollView.add(label);
+
+function getDeviceId() {
+	alert(TiPush.deviceId);
+}
 
 function update() {
 	TiPush.updateGooglePlayServices();
