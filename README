@@ -1,106 +1,122 @@
-Appcelerator Titanium Mobile Module Project
-===========================================
+#TiPush
 
-This is a skeleton Titanium Mobile Mobile module project.
+## Description
 
+GCM Push support for android.
 
-MODULE NAMING
--------------
+## Usage
 
-Choose a unique module id for your module.  This ID usually follows a namespace
-convention using DNS notation.  For example, com.appcelerator.module.test.  This
-ID can only be used once by all public modules in Titanium.
+```javascript
+var TiPush = require("ti.push");
+TiPush.addEventListener("callback", function(e) {
+	console.log("callback fired");
+	//test parsing
+	var data = JSON.parse(e.payload);
+	label.text = JSON.stringify(data);
+});
 
+var isAvailable = TiPush.isGooglePlayServicesAvailable();
+switch (isAvailable) {
+case TiPush.SERVICE_DISABLED:
+	Ti.API.info("SERVICE_DISABLED");
+	break;
+case TiPush.SERVICE_INVALID:
+	Ti.API.info("SERVICE_INVALID");
+	break;
+case TiPush.SERVICE_MISSING:
+	Ti.API.info("SERVICE_MISSING");
+	break;
+case TiPush.SERVICE_UPDATING:
+	Ti.API.info("SERVICE_UPDATING");
+	break;
+case TiPush.SERVICE_VERSION_UPDATE_REQUIRED:
+	Ti.API.info("SERVICE_VERSION_UPDATE_REQUIRED");
+	break;
+case TiPush.SUCCESS:
+	Ti.API.info("SUCCESS");
+	break;
+default:
+	Ti.API.info("Something went wrong, no matches : " + isAvailable);
+}
 
-GET STARTED
-------------
+var window = Ti.UI.createWindow({
+	backgroundColor : "#FFFFFF"
+});
+window.open();
 
-1. Edit manifest with the appropriate details about your module.
-2. Edit LICENSE to add your license details.
-3. Place any assets (such as PNG files) that are required anywhere in the module folder.
-4. Edit the timodule.json and configure desired settings.
-5. Code and build.
+var scrollView = Ti.UI.createScrollView({
+	layout : "vertical"
+});
+window.add(scrollView);
 
+var registerBtn = Ti.UI.createButton({
+	title : "Register",
+	top : "20"
+});
+registerBtn.addEventListener("click", getToken);
+scrollView.add(registerBtn);
 
-DOCUMENTATION FOR YOUR MODULE
------------------------------
+var unregisterBtn = Ti.UI.createButton({
+	title : "Un-Register",
+	top : "20"
+});
+unregisterBtn.addEventListener("click", deleteToken);
+scrollView.add(unregisterBtn);
 
-You should provide at least minimal documentation for your module in `documentation` folder using the Markdown syntax.
+var updateBtn = Ti.UI.createButton({
+	title : "Update",
+	top : "20"
+});
+updateBtn.addEventListener("click", update);
+scrollView.add(updateBtn);
 
-For more information on the Markdown syntax, refer to this documentation at:
+var newWinBtn = Ti.UI.createButton({
+	title : "Open new window",
+	top : "20"
+});
+newWinBtn.addEventListener("click", openNewWin);
+scrollView.add(newWinBtn);
 
-<http://daringfireball.net/projects/markdown/>
+var label = Ti.UI.createLabel({
+	top : 20,
+	left : 12,
+	right : 12,
+	textAlign : "center",
+	color : "#000"
+});
+scrollView.add(label);
 
+function update() {
+	TiPush.updateGooglePlayServices();
+}
 
-TEST HARNESS EXAMPLE FOR YOUR MODULE
-------------------------------------
+function getToken() {
+	TiPush.retrieveDeviceToken({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
 
-The `example` directory contains a skeleton application test harness that can be
-used for testing and providing an example of usage to the users of your module.
+function deleteToken() {
+	TiPush.clearStatus({
+		senderId : "15063256342",
+		success : function(evt) {
+			console.log(evt);
+		},
+		error : function(evt) {
+			console.log(evt);
+		}
+	});
+}
 
-
-BUILDING YOUR MODULE
---------------------
-
-Simply run `titanium build --platform <name of platform> --build-type production --dir /path/to/module`.
-You can omit the --dir option if your working directory is in the module's project directory.
-
-
-INSTALL YOUR MODULE
--------------------
-
-Mac OS X
---------
-Copy the distribution zip file into the `~/Library/Application Support/Titanium` folder
-
-Linux
------
-Copy the distribution zip file into the `~/.titanium` folder
-
-Windows
--------
-Copy the distribution zip file into the `C:\ProgramData\Titanium` folder
-
-
-REGISTER YOUR MODULE
---------------------
-
-Register your module with your application by editing `tiapp.xml` and adding your module.
-Example:
-
-<modules>
-	<module version="0.1">ti.push</module>
-</modules>
-
-When you run your project, the compiler will combine your module along with its dependencies
-and assets into the application.
-
-
-USING YOUR MODULE IN CODE
--------------------------
-
-To use your module in code, you will need to require it.
-
-For example,
-
-	var my_module = require('ti.push');
-	my_module.foo();
-
-
-TESTING YOUR MODULE
--------------------
-
-To test with the script, execute:
-
-	titanium run --dir=YOURMODULEDIR
-
-This will execute the app.js in the example folder as a Titanium application.
-
-
-DISTRIBUTING YOUR MODULE
--------------------------
-
-You can choose to manually distribute your module distribution zip file or through the Titanium Marketplace!
-
-
-Cheers!
+function openNewWin() {
+	Ti.UI.createWindow({
+		backgroundColor : "#FFFFFF"
+	}).open();
+}
+```
