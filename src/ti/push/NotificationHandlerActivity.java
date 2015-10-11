@@ -22,6 +22,8 @@ public class NotificationHandlerActivity extends Activity {
 					.getApplicationContext();
 			Intent launchIntent = appContext.getPackageManager()
 					.getLaunchIntentForPackage(appContext.getPackageName());
+			launchIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+			launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 			launchIntent.putExtra(TipushModule.PROPERTY_PAYLOAD, payload);
 			startActivity(launchIntent);
 		}
