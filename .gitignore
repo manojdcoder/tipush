@@ -1,4 +1,7 @@
+.apt_generated
+
 tmp
 bin
-build/
-.apt_generated
+build
+
+!/dist/*.zip

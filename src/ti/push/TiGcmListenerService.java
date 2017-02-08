@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.view.View;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
@@ -124,8 +125,12 @@ public class TiGcmListenerService extends GcmListenerService {
 
 		int smallIcon = 0;
 		if (payload.containsKey(PROPERTY_SMALL_ICON)) {
-			smallIcon = getResource("drawable",
-					(String) payload.get(PROPERTY_SMALL_ICON));
+			String propSmallIcon = (String) payload.get(PROPERTY_SMALL_ICON);
+			if (propSmallIcon.equals("default")) {
+				smallIcon = icon;
+			} else {
+				smallIcon = getResource("drawable", propSmallIcon);
+			}
 		} else {
 			smallIcon = icon;
 		}
@@ -133,8 +138,12 @@ public class TiGcmListenerService extends GcmListenerService {
 
 		int largeIcon = 0;
 		if (payload.containsKey(PROPERTY_LARGE_ICON)) {
-			largeIcon = getResource("drawable",
-					(String) payload.get(PROPERTY_LARGE_ICON));
+			String propLargeIcon = (String) payload.get(PROPERTY_LARGE_ICON);
+			if (propLargeIcon.equals("default")) {
+				largeIcon = icon;
+			} else {
+				largeIcon = getResource("drawable", propLargeIcon);
+			}
 		} else {
 			largeIcon = icon;
 		}
@@ -293,8 +302,31 @@ public class TiGcmListenerService extends GcmListenerService {
 			}
 		}
 
+		Notification notification = notificationBuilder.build();
+
+		// hide small icon from notification if no small icon was set in payload
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+				&& !payload.containsKey(PROPERTY_SMALL_ICON)) {
+			int smallIconViewId = getResources().getIdentifier("right_icon",
+					"id", android.R.class.getPackage().getName());
+			if (smallIconViewId != 0) {
+				if (notification.contentView != null) {
+					notification.contentView.setViewVisibility(smallIconViewId,
+							View.INVISIBLE);
+				}
+				if (notification.headsUpContentView != null) {
+					notification.headsUpContentView.setViewVisibility(
+							smallIconViewId, View.INVISIBLE);
+				}
+				if (notification.bigContentView != null) {
+					notification.bigContentView.setViewVisibility(
+							smallIconViewId, View.INVISIBLE);
+				}
+			}
+		}
+
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
-				.notify(getId(), notificationBuilder.build());
+				.notify(getId(), notification);
 	}
 
 	private int getId() {
