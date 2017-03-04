@@ -35,15 +35,16 @@ public class TiGcmListenerService extends GcmListenerService {
 	private static final String TAG = "TiGcmListenerService";
 
 	private static final String PROPERTY_BIG_TITLE = "bigTitle";
-	private static final String PROPERTY_BIG_CONTENT_TITLE = "bigContentTitle";
-	private static final String PROPERTY_BIG_MESSAGE = "bigMessage";
-	private static final String PROPERTY_BIG_TEXT = "bigText";
-	private static final String PROPERTY_SUMMARY_TEXT = "summaryText";
-	private static final String PROPERTY_LINES = "lines";
-	private static final String PROPERTY_SMALL_ICON = "smallIcon";
-	private static final String PROPERTY_LARGE_ICON = "largeIcon";
-	private static final String PROPERTY_BIG_LARGE_ICON = "bigLargeIcon";
-	private static final String PROPERTY_BIG_PICTURE = "bigPicture";
+	public static final String PROPERTY_BIG_CONTENT_TITLE = "bigContentTitle";
+	public static final String PROPERTY_BIG_MESSAGE = "bigMessage";
+	public static final String PROPERTY_BIG_TEXT = "bigText";
+	public static final String PROPERTY_SUMMARY_TEXT = "summaryText";
+	public static final String PROPERTY_LINES = "lines";
+	public static final String PROPERTY_SMALL_ICON = "smallIcon";
+	public static final String PROPERTY_LARGE_ICON = "largeIcon";
+	public static final String PROPERTY_BIG_LARGE_ICON = "bigLargeIcon";
+	public static final String PROPERTY_BIG_PICTURE = "bigPicture";
+	public static final String PROPERTY_BIG_BITMAP = "bigBitmap";
 
 	// private
 	private final static AtomicInteger counter = new AtomicInteger(0);
@@ -51,12 +52,10 @@ public class TiGcmListenerService extends GcmListenerService {
 	@Override
 	public void onMessageReceived(String from, Bundle data) {
 		Log.d(TAG, "message received");
-		sendNotification(data);
+		sendNotification(toHashMap(data));
 	}
 
-	private void sendNotification(Bundle data) {
-
-		HashMap<String, Object> payload = toHashMap(data);
+	public void sendNotification(HashMap<String, Object> payload) {
 
 		Intent notificationIntent = new Intent(this,
 				NotificationHandlerActivity.class);
@@ -69,12 +68,14 @@ public class TiGcmListenerService extends GcmListenerService {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+		Long when;
+		if (payload.containsKey(TiC.PROPERTY_WHEN)) {
+			when = (Long) payload.get(TiC.PROPERTY_WHEN);
+		} else {
+			when = System.currentTimeMillis();
+		}
 		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
-				this)
-				.setContentIntent(contentIntent)
-				.setWhen(
-						data.getLong(TiC.PROPERTY_WHEN,
-								System.currentTimeMillis()))
+				this).setContentIntent(contentIntent).setWhen(when)
 				.setAutoCancel(true);
 
 		String contentTitle = "";
@@ -185,6 +186,7 @@ public class TiGcmListenerService extends GcmListenerService {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			if (payload.containsKey(TiC.PROPERTY_STYLE)) {
 				String style = (String) payload.get(TiC.PROPERTY_STYLE);
+				Log.d(TAG, "notification style: " + style);
 				if (style.equals("BigTextStyle")) {
 					NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
 
@@ -257,25 +259,34 @@ public class TiGcmListenerService extends GcmListenerService {
 					}
 
 					if (payload.containsKey(PROPERTY_BIG_LARGE_ICON)) {
-						notificationBuilder
-								.setLargeIcon(BitmapFactory
+						bigPictureStyle
+								.bigLargeIcon(BitmapFactory
 										.decodeResource(
 												getResources(),
 												getResource(
 														"drawable",
 														(String) payload
 																.get(PROPERTY_BIG_LARGE_ICON))));
+					} else if (bitmap != null) {
+						bigPictureStyle.bigLargeIcon(bitmap);
 					}
 
 					if (payload.containsKey(PROPERTY_BIG_PICTURE)) {
-						notificationBuilder
-								.setLargeIcon(BitmapFactory
-										.decodeResource(
-												getResources(),
-												getResource(
-														"drawable",
-														(String) payload
-																.get(PROPERTY_BIG_PICTURE))));
+						if (payload.containsKey(PROPERTY_BIG_BITMAP)) {
+							Log.d(TAG,
+									"downloaded big picture from url: "
+											+ (String) payload
+													.get(PROPERTY_BIG_PICTURE));
+							bigPictureStyle.bigPicture((Bitmap) payload
+									.get(PROPERTY_BIG_BITMAP));
+						} else {
+							Log.d(TAG,
+									"started downloading big picture from url: "
+											+ (String) payload
+													.get(PROPERTY_BIG_PICTURE));
+							new AsyncBigPicture(this).execute(payload);
+							return;
+						}
 					}
 
 					notificationBuilder.setStyle(bigPictureStyle);
