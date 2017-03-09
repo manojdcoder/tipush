@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-android:id="@+id/custom_image_notification_content"
-android:layout_width="match_parent"
-android:layout_height="match_parent">
-	<ImageView
-	android:id="@+id/custom_image_notification_image"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-	android:scaleType="centerCrop"
-	android:src="@drawable/common_signin_btn_text_pressed_light" />
-</FrameLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/custom_image_notification_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/custom_image_notification_left_icon"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginRight="10dp"
+        android:layout_gravity="center_vertical" />
+
+    <ImageView
+        android:id="@+id/custom_image_notification_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="centerCrop" />
+
+</LinearLayout>

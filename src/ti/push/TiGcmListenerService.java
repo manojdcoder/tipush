@@ -63,10 +63,13 @@ public class TiGcmListenerService extends GcmListenerService {
 	public void sendNotification(HashMap<String, Object> payload) {
 
 		int custom_image_notification = 0;
+		int id_custom_image_notification_left_icon = 0;
 		int id_custom_image_notification_image = 0;
 		try {
 			custom_image_notification = TiRHelper
 					.getResource("layout.custom_image_notification");
+			id_custom_image_notification_left_icon = TiRHelper
+					.getResource("id.custom_image_notification_left_icon");
 			id_custom_image_notification_image = TiRHelper
 					.getResource("id.custom_image_notification_image");
 		} catch (ResourceNotFoundException e) {
@@ -132,24 +135,24 @@ public class TiGcmListenerService extends GcmListenerService {
 			Log.e(TAG, "not able to find app info for " + packageName);
 		}
 
-		int icon = 0;
+		int appIcon = 0;
 		if (payload.containsKey(TiC.PROPERTY_ICON)) {
-			icon = getResource("drawable",
+			appIcon = getResource("drawable",
 					(String) payload.get(TiC.PROPERTY_ICON));
 		} else if (appInfo != null) {
-			icon = appInfo.icon;
+			appIcon = appInfo.icon;
 		}
 
 		int smallIcon = 0;
 		if (payload.containsKey(PROPERTY_SMALL_ICON)) {
 			String propSmallIcon = (String) payload.get(PROPERTY_SMALL_ICON);
 			if (propSmallIcon.equals("default")) {
-				smallIcon = icon;
+				smallIcon = appIcon;
 			} else {
 				smallIcon = getResource("drawable", propSmallIcon);
 			}
 		} else {
-			smallIcon = icon;
+			smallIcon = appIcon;
 		}
 		notificationBuilder.setSmallIcon(smallIcon);
 
@@ -157,12 +160,12 @@ public class TiGcmListenerService extends GcmListenerService {
 		if (payload.containsKey(PROPERTY_LARGE_ICON)) {
 			String propLargeIcon = (String) payload.get(PROPERTY_LARGE_ICON);
 			if (propLargeIcon.equals("default")) {
-				largeIcon = icon;
+				largeIcon = appIcon;
 			} else {
 				largeIcon = getResource("drawable", propLargeIcon);
 			}
 		} else {
-			largeIcon = icon;
+			largeIcon = appIcon;
 		}
 		Bitmap largeIconBitmap = BitmapFactory.decodeResource(getResources(),
 				largeIcon);
@@ -336,22 +339,7 @@ public class TiGcmListenerService extends GcmListenerService {
 		// hide small icon from notification if no small icon was set in payload
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
 				&& !payload.containsKey(PROPERTY_SMALL_ICON)) {
-			int smallIconViewId = getResources().getIdentifier("right_icon",
-					"id", android.R.class.getPackage().getName());
-			if (smallIconViewId != 0) {
-				if (notification.contentView != null) {
-					notification.contentView.setViewVisibility(smallIconViewId,
-							View.INVISIBLE);
-				}
-				if (notification.headsUpContentView != null) {
-					notification.headsUpContentView.setViewVisibility(
-							smallIconViewId, View.INVISIBLE);
-				}
-				if (notification.bigContentView != null) {
-					notification.bigContentView.setViewVisibility(
-							smallIconViewId, View.INVISIBLE);
-				}
-			}
+			hideRemoteViewById(notification, "right_icon");
 		}
 
 		if (payload.containsKey(TiC.PROPERTY_BACKGROUND_IMAGE)) {
@@ -360,6 +348,8 @@ public class TiGcmListenerService extends GcmListenerService {
 				Log.d(TAG, "downloaded background image from url: " + url);
 				RemoteViews contentView = new RemoteViews(getPackageName(),
 						custom_image_notification);
+				contentView.setImageViewResource(
+						id_custom_image_notification_left_icon, appIcon);
 				contentView.setImageViewBitmap(
 						id_custom_image_notification_image,
 						(Bitmap) payload.get(PROPERTY_BACKRGOUND_IMAGE_BITMAP));
@@ -375,20 +365,30 @@ public class TiGcmListenerService extends GcmListenerService {
 		}
 
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
-				.notify(getId(), notification);
+				.notify(getAutoId(), notification);
 	}
 
-	private int getId() {
-		return counter.incrementAndGet();
-	}
-
-	private HashMap<String, Object> toHashMap(Bundle data) {
-		HashMap<String, Object> hashMap = new HashMap<String, Object>();
-		Set<String> keySet = data.keySet();
-		for (final String key : keySet) {
-			hashMap.put(key, data.get(key));
+	private void hideRemoteViewById(Notification notification, String id) {
+		int viewId = getViewId(id);
+		if (viewId != 0) {
+			if (notification.contentView != null) {
+				notification.contentView.setViewVisibility(viewId,
+						View.INVISIBLE);
+			}
+			if (notification.headsUpContentView != null) {
+				notification.headsUpContentView.setViewVisibility(viewId,
+						View.INVISIBLE);
+			}
+			if (notification.bigContentView != null) {
+				notification.bigContentView.setViewVisibility(viewId,
+						View.INVISIBLE);
+			}
 		}
-		return hashMap;
+	}
+
+	private int getViewId(String id) {
+		return getResources().getIdentifier(id, "id",
+				android.R.class.getPackage().getName());
 	}
 
 	private int getResource(String type, String name) {
@@ -407,5 +407,18 @@ public class TiGcmListenerService extends GcmListenerService {
 			}
 		}
 		return icon;
+	}
+
+	private HashMap<String, Object> toHashMap(Bundle data) {
+		HashMap<String, Object> hashMap = new HashMap<String, Object>();
+		Set<String> keySet = data.keySet();
+		for (final String key : keySet) {
+			hashMap.put(key, data.get(key));
+		}
+		return hashMap;
+	}
+
+	private int getAutoId() {
+		return counter.incrementAndGet();
 	}
 }
