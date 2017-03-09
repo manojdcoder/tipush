@@ -7,18 +7,19 @@ import java.net.URL;
 import java.util.HashMap;
 
 import org.appcelerator.kroll.common.Log;
+import org.appcelerator.titanium.TiC;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 
-public class AsyncBigPicture extends
+public class AsyncDownloader extends
 		AsyncTask<HashMap<String, Object>, Void, HashMap<String, Object>> {
 
 	TiGcmListenerService tiGcmListenerService;
 
-	public AsyncBigPicture(TiGcmListenerService service) {
+	public AsyncDownloader(TiGcmListenerService service) {
 		super();
 		tiGcmListenerService = service;
 	}
@@ -30,12 +31,13 @@ public class AsyncBigPicture extends
 			HashMap<String, Object> payload = params[0];
 			URL url = new URL(
 					(String) payload
-							.get(TiGcmListenerService.PROPERTY_BIG_PICTURE));
+							.get(TiGcmListenerService.PROPERTY_BITMAP_URL));
 			HttpURLConnection connection = (HttpURLConnection) url
 					.openConnection();
 			connection.setDoInput(true);
 			connection.connect();
-			payload.put(TiGcmListenerService.PROPERTY_BIG_BITMAP,
+			payload.put(
+					(String) payload.get(TiGcmListenerService.PROPERTY_BITMAP),
 					BitmapFactory.decodeStream(connection.getInputStream()));
 			return payload;
 		} catch (MalformedURLException e) {

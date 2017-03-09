@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.view.View;
+import android.widget.RemoteViews;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
@@ -34,7 +35,7 @@ public class TiGcmListenerService extends GcmListenerService {
 
 	private static final String TAG = "TiGcmListenerService";
 
-	private static final String PROPERTY_BIG_TITLE = "bigTitle";
+	public static final String PROPERTY_BIG_TITLE = "bigTitle";
 	public static final String PROPERTY_BIG_CONTENT_TITLE = "bigContentTitle";
 	public static final String PROPERTY_BIG_MESSAGE = "bigMessage";
 	public static final String PROPERTY_BIG_TEXT = "bigText";
@@ -44,7 +45,11 @@ public class TiGcmListenerService extends GcmListenerService {
 	public static final String PROPERTY_LARGE_ICON = "largeIcon";
 	public static final String PROPERTY_BIG_LARGE_ICON = "bigLargeIcon";
 	public static final String PROPERTY_BIG_PICTURE = "bigPicture";
-	public static final String PROPERTY_BIG_BITMAP = "bigBitmap";
+	public static final String PROPERTY_BIG_PICTURE_BITMAP = "bigPictureBitmap";
+	public static final String PROPERTY_BACKRGOUND_IMAGE_BITMAP = "backgroundImageBitmap";
+
+	public static final String PROPERTY_BITMAP_URL = "bitmapUrl";
+	public static final String PROPERTY_BITMAP = "bitmap";
 
 	// private
 	private final static AtomicInteger counter = new AtomicInteger(0);
@@ -56,6 +61,17 @@ public class TiGcmListenerService extends GcmListenerService {
 	}
 
 	public void sendNotification(HashMap<String, Object> payload) {
+
+		int custom_image_notification = 0;
+		int id_custom_image_notification_image = 0;
+		try {
+			custom_image_notification = TiRHelper
+					.getResource("layout.custom_image_notification");
+			id_custom_image_notification_image = TiRHelper
+					.getResource("id.custom_image_notification_image");
+		} catch (ResourceNotFoundException e) {
+			Log.e(TAG, "XML resources could not be found!!!");
+		}
 
 		Intent notificationIntent = new Intent(this,
 				NotificationHandlerActivity.class);
@@ -148,9 +164,10 @@ public class TiGcmListenerService extends GcmListenerService {
 		} else {
 			largeIcon = icon;
 		}
-		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), largeIcon);
-		if (bitmap != null) {
-			notificationBuilder.setLargeIcon(bitmap);
+		Bitmap largeIconBitmap = BitmapFactory.decodeResource(getResources(),
+				largeIcon);
+		if (largeIconBitmap != null) {
+			notificationBuilder.setLargeIcon(largeIconBitmap);
 		}
 
 		if (payload.containsKey(TiC.PROPERTY_DEFAULTS)) {
@@ -267,24 +284,25 @@ public class TiGcmListenerService extends GcmListenerService {
 														"drawable",
 														(String) payload
 																.get(PROPERTY_BIG_LARGE_ICON))));
-					} else if (bitmap != null) {
-						bigPictureStyle.bigLargeIcon(bitmap);
+					} else if (largeIconBitmap != null) {
+						bigPictureStyle.bigLargeIcon(largeIconBitmap);
 					}
 
 					if (payload.containsKey(PROPERTY_BIG_PICTURE)) {
-						if (payload.containsKey(PROPERTY_BIG_BITMAP)) {
-							Log.d(TAG,
-									"downloaded big picture from url: "
-											+ (String) payload
-													.get(PROPERTY_BIG_PICTURE));
+						String url = (String) payload.get(PROPERTY_BIG_PICTURE);
+						if (payload.containsKey(PROPERTY_BIG_PICTURE_BITMAP)) {
+							Log.d(TAG, "downloaded big picture from url: "
+									+ url);
 							bigPictureStyle.bigPicture((Bitmap) payload
-									.get(PROPERTY_BIG_BITMAP));
+									.get(PROPERTY_BIG_PICTURE_BITMAP));
 						} else {
 							Log.d(TAG,
 									"started downloading big picture from url: "
-											+ (String) payload
-													.get(PROPERTY_BIG_PICTURE));
-							new AsyncBigPicture(this).execute(payload);
+											+ url);
+							payload.put(PROPERTY_BITMAP_URL, url);
+							payload.put(PROPERTY_BITMAP,
+									PROPERTY_BIG_PICTURE_BITMAP);
+							new AsyncDownloader(this).execute(payload);
 							return;
 						}
 					}
@@ -333,6 +351,26 @@ public class TiGcmListenerService extends GcmListenerService {
 					notification.bigContentView.setViewVisibility(
 							smallIconViewId, View.INVISIBLE);
 				}
+			}
+		}
+
+		if (payload.containsKey(TiC.PROPERTY_BACKGROUND_IMAGE)) {
+			String url = (String) payload.get(TiC.PROPERTY_BACKGROUND_IMAGE);
+			if (payload.containsKey(PROPERTY_BACKRGOUND_IMAGE_BITMAP)) {
+				Log.d(TAG, "downloaded background image from url: " + url);
+				RemoteViews contentView = new RemoteViews(getPackageName(),
+						custom_image_notification);
+				contentView.setImageViewBitmap(
+						id_custom_image_notification_image,
+						(Bitmap) payload.get(PROPERTY_BACKRGOUND_IMAGE_BITMAP));
+				notification.contentView = contentView;
+			} else {
+				Log.d(TAG, "started downloading background image from url: "
+						+ url);
+				payload.put(PROPERTY_BITMAP_URL, url);
+				payload.put(PROPERTY_BITMAP, PROPERTY_BACKRGOUND_IMAGE_BITMAP);
+				new AsyncDownloader(this).execute(payload);
+				return;
 			}
 		}
 
